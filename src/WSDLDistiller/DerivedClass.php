@@ -29,16 +29,81 @@ class DerivedClass
     /**
      * @var string
      */
-    private static $magicMethodsTemplate = <<<CODE
+    private static $classCodeTemplate = <<<CODE
+{CLASS_DOC_BLOCK}
+class {CLASS_NAME}
+{
+{FIELDS}
+    /**
+     * Property names that contain objects
+     *
+     * @var bool[]
+     */
+    private static \$__objectProperties = [
+{OBJECT_PROPERTIES}
+    ];
 
     /**
      * Property names that can be accessed as arrays
      *
-     * @var string[int]
+     * @var bool[]
      */
-    private static \$__ArrayProperties__ = [
-        %s,
+    private static \$__arrayProperties = [
+{ARRAY_PROPERTIES}
     ];
+
+    /**
+     * Create an instance of {CLASS_NAME} with properties populated from an array
+     *
+     * @param array \$array
+     * @return {CLASS_NAME}
+     */
+    public static function fromArray(array \$array)
+    {
+        \$result = new {CLASS_NAME}();
+
+        foreach (\$array as \$name => \$value) {
+            \$expectedClassName = isset(self::\$__objectProperties[\$name]) ? self::\$__objectProperties[\$name] : null;
+
+            if (is_array(\$value) || \$value instanceof \stdClass) {
+                \$value = (array) \$value;
+
+                if (isset(self::\$__arrayProperties[\$name])) {
+                    if (ctype_digit((string) key(\$value))) {
+                        if (\$expectedClassName) {
+                            foreach (\$value as \$key => &\$element) {
+                                if (!(\$element instanceof \$expectedClassName)) {
+                                    if (is_object(\$element)) {
+                                        \$element = (array) \$element;
+                                    }
+
+                                    if (is_array(\$element)) {
+                                        \$element = \$expectedClassName::fromArray(\$element);
+                                    } else {
+                                        throw new \InvalidArgumentException('Unable to create object of class ' . \$expectedClassName . ' from supplied value at index ' . \$key);
+                                    }
+                                }
+                            }
+                        }
+
+                        \$result->{\$name} = \$value;
+                    } else if (\$expectedClassName) {
+                        \$result->{\$name} = [\$expectedClassName::fromArray(\$value)];
+                    } else {
+                        throw new \InvalidArgumentException('Unable to interpret array at index ' . \$name);
+                    }
+                } else if (\$expectedClassName) {
+                    \$result->{\$name} = \$expectedClassName::fromArray(\$value);
+                } else {
+                    throw new \InvalidArgumentException('Unable to interpret array at index ' . \$name);
+                }
+            } else {
+                \$result->{\$name} = \$value;
+            }
+        }
+
+        return \$result;
+    }
 
     /**
      * Magic getter method
@@ -48,15 +113,19 @@ class DerivedClass
      */
     public function __get(\$name)
     {
-        if (isset(self::\$__ArrayProperties__[\$name])) {
-            if (!is_array(\$this->\$name)) {
-                \$this->\$name = \$this->\$name !== null ? [\$this->\$name] : [];
+        if (isset(self::\$__arrayProperties[\$name])) {
+            if (isset(\$this->{\$name})) {
+                if (!is_array(\$this->{\$name})) {
+                    \$this->\$name = [\$this->{\$name}];
+                }
+
+                return \$this->{\$name};
             }
 
-            return \$this->\$name;
+            return [];
         }
 
-        return null;
+        return isset(\$this->{\$name}) ? \$this->{\$name} : null;
     }
 
     /**
@@ -67,50 +136,107 @@ class DerivedClass
      */
     public function __set(\$name, \$value)
     {
-        if (isset(self::\$__ArrayProperties__[\$name])) {
-            if (!is_array(\$this->\$name)) {
-                \$this->\$name = \$value !== null ? [\$value] : [];
+        if (property_exists(\$this, \$name)) {
+            \$expectedClassName = isset(self::\$__objectProperties[\$name]) ? self::\$__objectProperties[\$name] : null;
+
+            if (isset(self::\$__arrayProperties[\$name])) {
+                if (is_array(\$value)) {
+                    if (\$expectedClassName) {
+                        foreach (\$value as \$key => \$element) {
+                            if (!(\$element instanceof \$expectedClassName)) {
+                                throw new \InvalidArgumentException('Element ' . \$key . ' of supplied array is not an instance of ' . \$expectedClassName);
+                            }
+                        }
+                    }
+                } else {
+                    if (\$expectedClassName && \$value !== null && !(\$value instanceof \$expectedClassName)) {
+                        throw new \InvalidArgumentException('Supplied value is not an instance of ' . \$expectedClassName);
+                    }
+
+                    \$value = \$value !== null ? [\$value] : null;
+                }
+            } else if (\$expectedClassName) {
+                if (\$value !== null && !(\$value instanceof \$expectedClassName)) {
+                    throw new \InvalidArgumentException('Supplied value is not an instance of ' . \$expectedClassName);
+                }
             }
+
+            \$this->{\$name} = \$value;
         }
     }
 
+    /**
+     * Magic isset check method
+     *
+     * @param string \$name
+     * @return bool
+     */
+    public function __isset(\$name)
+    {
+        return isset(\$this->\$name);
+    }
+
+    /**
+     * Magic unsetter method
+     *
+     * @param string \$name
+     */
+    public function __unset(\$name)
+    {
+        if (property_exists(\$this, \$name)) {
+            \$this->\$name = null;
+        }
+    }
+}
+
 CODE;
+
+    private function renderClassCodeTemplate($vars)
+    {
+        return preg_replace_callback('/@@(?=@*+{)|@{|{(\w+)}/', function($match) use($vars) {
+            if ($match[0][0] === '@') {
+                return $match[0][1];
+            }
+
+            return isset($vars[$match[1]]) ? $vars[$match[1]] : $match[0];
+        }, self::$classCodeTemplate);
+    }
 
     private function generateCode()
     {
-        $fieldCode = '';
-        $magicProperties = "/**\n";
-        $arrayProperties = [];
+        $classDocBlock = "/**\n * Class {$this->name}\n *\n";
+        $fieldCode = $arrayProperties = $objectProperties = [];
 
         foreach ($this->fields as $name => $field) {
+            $arrayBrackets = '';
+
             if ($field['isArray']) {
-                $visibilityModifier = 'private';
                 $arrayBrackets = '[]';
-                $arrayProperties[] = var_export($name, TRUE) . ' => true';
-                $magicProperties .= " * @property {$field['type']}[] \${$name}\n";
-            } else {
-                $visibilityModifier = 'public';
-                $arrayBrackets = '';
+                $arrayProperties[] = '        ' . var_export($name, true) . ' => true,';
             }
 
-            $fieldCode .= <<<CODE
+            if (!in_array($field['type'], ['bool', 'int', 'float', 'string'])) {
+                $objectProperties[] = '        ' . var_export($name, true) . ' => ' . var_export($field['type'], true) . ',';
+            }
 
+            $classDocBlock .= " * @property {$field['type']}{$arrayBrackets} \${$name}\n";
+
+            $fieldCode[] = <<<CODE
     /**
      * @var {$field['type']}{$arrayBrackets}
      */
-    {$visibilityModifier} \${$name};
+    private \${$name};
 
 CODE;
         }
 
-        if ($magicProperties !== "/**\n") {
-            $magicProperties .= " */\n";
-            $magicMethods = sprintf(self::$magicMethodsTemplate, implode(",\n        ", $arrayProperties));
-        } else {
-            $magicMethods = $magicProperties = '';
-        }
-
-        $this->code = "{$magicProperties}class {$this->name}\n{{$fieldCode}{$magicMethods}}\n";
+        $this->code = $this->renderClassCodeTemplate([
+            'CLASS_DOC_BLOCK'   => $classDocBlock . ' */',
+            'CLASS_NAME'        => $this->name,
+            'FIELDS'            => implode("\n", $fieldCode),
+            'OBJECT_PROPERTIES' => implode("\n", $objectProperties),
+            'ARRAY_PROPERTIES'  => implode("\n", $arrayProperties),
+        ]);
     }
 
     /**
