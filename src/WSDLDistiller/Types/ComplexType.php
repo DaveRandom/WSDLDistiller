@@ -17,6 +17,18 @@ class ComplexType extends Type implements \IteratorAggregate
     private $elements = [];
 
     /**
+     * @var string
+     */
+    private $base;
+
+    public function __construct(string $namespace, string $name, string $base = 'WSDLDistillerBaseType')
+    {
+        parent::__construct($namespace, $name);
+
+        $this->base = $base;
+    }
+
+    /**
      * @param string        $name
      * @param TypeReference $typeRef
      * @param bool          $isArray
@@ -27,6 +39,16 @@ class ComplexType extends Type implements \IteratorAggregate
             'type'    => $typeRef,
             'isArray' => (bool)$isArray,
         ];
+    }
+
+    public function setBase(string $base)
+    {
+        $this->base = $base;
+    }
+
+    public function getBase(): string
+    {
+        return $this->base;
     }
 
     /**

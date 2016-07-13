@@ -17,6 +17,11 @@ class ServiceCollection
     private $classPrefix;
 
     /**
+     * @var string
+     */
+    private $namespace;
+
+    /**
      * @var string[]
      */
     private $typeNames;
@@ -49,7 +54,11 @@ class {$this->getBaseServiceName()} extends \SoapClient
 CODE;
 
         foreach ($this->typeNames as $typeName) {
-            $this->baseServiceCode .= '        ' . var_export($typeName, TRUE) . ' => ' . var_export($this->classPrefix . $typeName, TRUE) . ",\n";
+            $this->baseServiceCode .= sprintf(
+                "        %s => %s,\n",
+                var_export($typeName, true),
+                var_export('\\' . trim($this->namespace, '\\') . '\\' . $this->classPrefix . $typeName, true)
+            );
         }
 
         $this->baseServiceCode .= <<<CODE
@@ -58,7 +67,7 @@ CODE;
     /**
      * @param mixed \$wsdl
      * @param array \$options
-     * @throws SoapFault
+     * @throws \\SoapFault
      */
     public function __construct(\$wsdl, array \$options = [])
     {
@@ -104,12 +113,14 @@ CODE;
     }
 
     /**
-     * @param string   $classPrefix
+     * @param string $classPrefix
+     * @param string $namespace
      * @param string[] $typeNames
      */
-    public function __construct($classPrefix, array $typeNames)
+    public function __construct($classPrefix, $namespace, array $typeNames)
     {
         $this->classPrefix = $classPrefix;
+        $this->namespace = $namespace;
         $this->typeNames = $typeNames;
     }
 

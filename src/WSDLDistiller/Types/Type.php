@@ -21,62 +21,38 @@ abstract class Type
      */
     private $namespace;
 
-    /**
-     * @param string $namespace
-     * @param string $name
-     * @return string
-     */
-    public static function makeFQTN($namespace, $name)
+    public static function makeFQTN(string $namespace, string $name): string
     {
         return $namespace . '#' . $name;
     }
 
-    /**
-     * @param string $namespace
-     * @param string $name
-     */
-    public function __construct($namespace, $name)
+    public function __construct(string $namespace, string $name)
     {
-        $this->namespace = (string)$namespace;
-        $this->name = (string)$name;
+        $this->namespace = $namespace;
+        $this->name = $name;
     }
 
-    /**
-     * @param string $name
-     */
-    public function setName($name)
+    public function setName(string $name)
     {
         $this->name = (string)$name;
     }
 
-    /**
-     * @return string
-     */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @param string $namespace
-     */
-    public function setNamespace($namespace)
+    public function setNamespace(string $namespace)
     {
-        $this->namespace = (string)$namespace;
+        $this->namespace = $namespace;
     }
 
-    /**
-     * @return string
-     */
-    public function getNamespace()
+    public function getNamespace(): string
     {
         return $this->namespace;
     }
 
-    /**
-     * @return string
-     */
-    public function getFQTN()
+    public function getFQTN(): string
     {
         return self::makeFQTN($this->namespace, $this->name);
     }

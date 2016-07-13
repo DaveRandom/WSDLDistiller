@@ -29,6 +29,11 @@ class Distiller
     private $classPrefix;
 
     /**
+     * @var string
+     */
+    private $namespace;
+
+    /**
      * @var \DOMDocument
      */
     private $document;
@@ -91,9 +96,9 @@ class Distiller
     /**
      * @param string $wsdl
      * @param string $classPrefix
-     * @throws InvalidArgumentException
+     * @param string $namespace
      */
-    public function __construct($wsdl, $classPrefix = '')
+    public function __construct($wsdl, $classPrefix = '', $namespace = '')
     {
         $this->classPrefix = (string)$classPrefix;
 
@@ -107,6 +112,7 @@ class Distiller
         $this->xpath = new \DOMXPath($this->document);
         $this->xpath->registerNamespace('xs', self::URI_XML_SCHEMA);
         $this->xpath->registerNamespace('wsdl', self::URI_WSDL_SCHEMA);
+        $this->namespace = $namespace;
     }
 
     /**
@@ -154,17 +160,38 @@ class Distiller
         return $this->typeRefs[$fqtn];
     }
 
+    private function getNameFromPrefixedName($prefixed)
+    {
+        $baseNameParts = explode(':', $prefixed);
+        return end($baseNameParts);
+    }
+
     private function extractComplexTypes()
     {
-        foreach ($this->xpath->query('//xs:schema/xs:complexType') as $complexType) {
+        foreach ($this->xpath->query('//xs:schema/xs:complexType | //xs:schema/xs:element[@name and xs:complexType]') as $complexType) {
             /** @var \DOMElement $complexType */
             $name = $complexType->getAttribute('name');
             $namespace = $this->getTargetNamespace($complexType);
 
-            $type = new ComplexType($namespace, $name);
+            $extensionNodes = $this->xpath->query('./xs:complexContent/xs:extension', $complexType);
+            if ($extensionNodes->length === 1) {
+                /** @var \DOMElement $extension */
+                $extension = $extensionNodes->item(0);
+                $type = new ComplexType($namespace, $name, $this->getNameFromPrefixedName($extension->getAttribute('base')));
+                $nodes = $this->xpath->query('./xs:sequence', $extension);
+                $sequence = $nodes->length ? $nodes->item(0) : null;
+            } else {
+                $type = new ComplexType($namespace, $name);
+                $query = $this->getNameFromPrefixedName($complexType->tagName) === 'complexType'
+                    ? './xs:sequence'
+                    : './xs:complexType/xs:sequence';
+                $nodes = $this->xpath->query($query, $complexType);
+                $sequence = $nodes->length ? $nodes->item(0) : null;
+            }
+
             $this->complexTypes[$type->getFQTN()] = $type;
 
-            foreach ($this->xpath->query('./xs:sequence/xs:element', $complexType) as $element) {
+            foreach ($sequence ? $this->xpath->query('./xs:element', $sequence) : [] as $element) {
                 /** @var \DOMElement $element */
                 $elementName = $element->getAttribute('name');
                 $typeRef = $this->resolveTypeRef($element, 'type');
@@ -249,7 +276,13 @@ class Distiller
                             : 'string';
                     }
                 } else if (!isset($this->complexTypes[$fqtn]) && !isset($this->simpleTypes[$fqtn])) {
-                    throw new RuntimeException('Expected type ' . $fqtn . ' was not defined in the document');
+                    if ($element['type']->getName() !== '') {
+                        throw new RuntimeException('Expected type ' . $fqtn . ' was not defined in the document');
+                    }
+
+                    if (!isset($this->phpTypes[$fqtn])) {
+                        $this->phpTypes[$fqtn] = 'mixed';
+                    }
                 }
             }
 
@@ -316,7 +349,7 @@ class Distiller
         }
 
         foreach ($this->complexTypes as $complexType) {
-            $class = new DerivedClass($this->classPrefix . $complexType->getName());
+            $class = new DerivedClass($this->classPrefix . $complexType->getName(), $complexType->getBase());
 
             foreach ($complexType as $name => $elementInfo) {
                 /** @var TypeReference $typeRef */
@@ -347,7 +380,7 @@ class Distiller
             $this->loadTypes();
         }
 
-        $this->serviceCollection = new ServiceCollection($this->classPrefix, $this->complexTypeNames);
+        $this->serviceCollection = new ServiceCollection($this->classPrefix, $this->namespace, $this->complexTypeNames);
 
         // TODO: this method needs a lot more logic! Assumes a single port per service
         foreach ($this->xpath->query('//wsdl:service') as $serviceElement) {
