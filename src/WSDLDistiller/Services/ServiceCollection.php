@@ -57,7 +57,7 @@ CODE;
             $this->baseServiceCode .= sprintf(
                 "        %s => %s,\n",
                 var_export($typeName, true),
-                var_export('\\' . trim($this->namespace, '\\') . '\\' . $this->classPrefix . $typeName, true)
+                $typeName . '::class'
             );
         }
 
@@ -88,6 +88,12 @@ CODE;
         $this->serviceFactoryCode = <<<CODE
 class {$this->getServiceFactoryName()}
 {
+    private \$defaultOptions;
+
+    public function __construct(array \$defaultOptions = [])
+    {
+        \$this->defaultOptions = \$defaultOptions;
+    }
 CODE;
 
         foreach ($this->services as $service) {
@@ -103,7 +109,7 @@ CODE;
      */
     public function create{$service->getName()}(\$wsdl, array \$options = [])
     {
-        return new {$this->classPrefix}{$service->getName()}(\$wsdl, \$options);
+        return new {$this->classPrefix}{$service->getName()}(\$wsdl, \$options + \$this->defaultOptions);
     }
 
 CODE;
