@@ -10,8 +10,7 @@
         }
     ],
     "autoload": {
-        "psr-4": { "DaveRandom\\WSDLDistiller\\": "src/" },
-        "files": [ "src/functions.php" ]
+        "psr-4": { "DaveRandom\\WSDLDistiller\\": "src/" }
     },
     "bin": ["bin/distill.php"]
 }
