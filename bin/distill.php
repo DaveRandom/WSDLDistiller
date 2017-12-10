@@ -117,10 +117,7 @@ if (!isset($argv[1])) {
     exit($helpStr);
 }
 
-if (!$wsdlPath = @\realpath(\array_pop($argv))) {
-    error("Invalid WSDL path");
-}
-
+$wsdlPath = \array_pop($argv);
 parse_options($argv, $options);
 
 if (!\file_exists($options['output-dir'])) {

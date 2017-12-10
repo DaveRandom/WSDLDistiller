@@ -11,7 +11,7 @@
  *
  * Base class for all types generated from the WSDL
  */
-abstract class tpl
+abstract class WSDLDistillerBaseType
 {
     protected static $__objectProperties = [];
     protected static $__arrayProperties = [];
