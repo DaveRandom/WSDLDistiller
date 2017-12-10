@@ -12,5 +12,6 @@
     "autoload": {
         "psr-4": { "DaveRandom\\WSDLDistiller\\": "src/" },
         "files": [ "src/functions.php" ]
-    }
+    },
+    "bin": ["bin/distill.php"]
 }
