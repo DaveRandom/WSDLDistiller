@@ -1,37 +1,37 @@
-#!/usr/bin/php
+#!/usr/bin/env php
 <?php
 
-namespace WSDLDistiller;
+namespace DaveRandom\WSDLDistiller;
 
-spl_autoload_register(function ($className) {
-    if (substr($className, 0, 13) === 'WSDLDistiller') {
-        $file = __DIR__ . '/' . strtr($className, '\\', '/') . '.php';
+\define(__NAMESPACE__ . '\\APP_ROOT', \realpath(__DIR__ . '/..'));
 
-        if (is_file($file)) {
-            /** @noinspection PhpIncludeInspection */
-            require $file;
-        }
-    }
-});
+if (\is_file(APP_ROOT . '/vendor/autoload.php')) { // standalone install
+    require APP_ROOT . '/vendor/autoload.php';
+} else if (\is_file(APP_ROOT . '/../../autoload.php')) { // composer bin
+    /** @noinspection PhpIncludeInspection */
+    require APP_ROOT . '/../../autoload.php';
+} else {
+    error("Cannot locate autoloader file");
+}
 
 function error($message)
 {
-    fwrite(STDERR, "Error: $message\n");
+    \fwrite(STDERR, "Error: $message\n");
     exit(1);
 }
 
 function write($format, $name, $data)
 {
-    $file = sprintf($format, $name);
+    $file = \sprintf($format, $name);
 
     echo "Writing {$file}...";
-    echo file_put_contents($file, $data) === strlen($data) ? 'done' : 'failed';
+    echo \file_put_contents($file, $data) === \strlen($data) ? 'done' : 'failed';
     echo "\n";
 }
 
 function render_template($template, $vars)
 {
-    return preg_replace_callback('/@@(?=@*+{)|@{|{(\w+)}/', function($match) use($vars) {
+    return \preg_replace_callback('/@@(?=@*+{)|@{|{(\w+)}/', function($match) use($vars) {
         if ($match[0][0] === '@') {
             return $match[0][1];
         }
@@ -44,44 +44,44 @@ function parse_options($argv, &$options)
 {
     $phpIdentifier = '[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*';
 
-    for ($i = 1, $l = count($argv); $i < $l; $i++) {
-        $parts = explode('=', $argv[$i], 2);
-        $value = count($parts) === 2 ? $parts[1] : NULL;
-        $opt = strtolower(trim($parts[0], '-'));
+    for ($i = 1, $l = \count($argv); $i < $l; $i++) {
+        $parts = \explode('=', $argv[$i], 2);
+        $value = \count($parts) === 2 ? $parts[1] : null;
+        $opt = \strtolower(\trim($parts[0], '-'));
 
         switch ($opt) {
             case 'prefix':
-                if ($value === NULL) {
+                if ($value === null) {
                     $value = $argv[++$i];
                 }
 
-                if (!preg_match("/^$phpIdentifier$/", $value)) {
+                if (!\preg_match("/^$phpIdentifier$/", $value)) {
                     error("Invalid class name prefix");
                 }
                 break;
 
             case 'namespace':
-                if ($value === NULL) {
+                if ($value === null) {
                     $value = $argv[++$i];
                 }
 
-                if (!preg_match("/^$phpIdentifier(?:\\\\$phpIdentifier)*$/", $value)) {
+                if (!\preg_match("/^$phpIdentifier(?:\\\\$phpIdentifier)*$/", $value)) {
                     error("Invalid namespace identifier");
                 }
                 break;
 
             case 'file-names':
-                if ($value === NULL) {
+                if ($value === null) {
                     $value = $argv[++$i];
                 }
 
-                if (substr_count($value, '%s') !== 1) {
+                if (\substr_count($value, '%s') !== 1) {
                     error('Invalid file naming pattern, must contain "%s" exactly once');
                 }
                 break;
 
             case 'output-dir':
-                if ($value === NULL) {
+                if ($value === null) {
                     $value = $argv[++$i];
                 }
                 break;
@@ -95,14 +95,14 @@ function parse_options($argv, &$options)
 }
 
 $options = [
-    'prefix'     => NULL,
-    'namespace'  => NULL,
+    'prefix'     => null,
+    'namespace'  => null,
     'file-names' => '%s.php',
     'output-dir' => __DIR__ . DIRECTORY_SEPARATOR . 'wsdl_classes',
 ];
 
-$fileName = basename(__FILE__);
-$helpStr = <<<HELP
+$fileName = \basename(__FILE__);
+$helpStr = /** @lang text */ <<<HELP
 
  Syntax: php {$fileName} [options] <wsdl-path>
   Options:
@@ -117,35 +117,35 @@ if (!isset($argv[1])) {
     exit($helpStr);
 }
 
-if (!$wsdlPath = @realpath(array_pop($argv))) {
+if (!$wsdlPath = @\realpath(\array_pop($argv))) {
     error("Invalid WSDL path");
 }
 
 parse_options($argv, $options);
 
-if (!file_exists($options['output-dir'])) {
-    @mkdir($options['output-dir'], 0777, TRUE);
+if (!\file_exists($options['output-dir'])) {
+    @\mkdir($options['output-dir'], 0777, true);
 }
-if (!is_dir($options['output-dir']) || !($options['output-dir'] = realpath($options['output-dir']))) {
+if (!\is_dir($options['output-dir']) || !($options['output-dir'] = \realpath($options['output-dir']))) {
     error('Output directory does not exist and it could not be created');
 }
 
-$pathFormat = rtrim($options['output-dir'], '\\/') . DIRECTORY_SEPARATOR . $options['file-names'];
+$pathFormat = \rtrim($options['output-dir'], '\\/') . DIRECTORY_SEPARATOR . $options['file-names'];
 
 $namespace = isset($options['namespace']) ? "\nnamespace {$options['namespace']};\n" : '';
-$version = date('Y.m.d.His');
+$version = \date('Y.m.d.His');
 $fileHeader = <<<HEADER
 <?php
 /**
- * This file was automatically generated by WSDLDistiller and should not be altered
- * @see https://github.com/DaveRandom/WSDLDistiller
+ * This file was automatically generated by DaveRandom\WSDLDistiller and should not be altered
+ * @see https://github.com/DaveRandom/DaveRandom\WSDLDistiller
  * @version {$version}
  */
 {$namespace}
 
 HEADER;
 
-$baseTypeTemplate = file_get_contents(__DIR__ . '/WSDLDistiller/Types/WSDLDistillerBaseType.php');
+$baseTypeTemplate = \file_get_contents(APP_ROOT . '/templates/WSDLDistillerBaseType.php');
 write($pathFormat, 'WSDLDistillerBaseType', render_template($baseTypeTemplate, ['NAMESPACE' => $namespace]));
 
 $distiller = new Distiller($wsdlPath, $options['prefix'], $options['namespace']);

@@ -1,11 +1,11 @@
 <?php
 
-namespace WSDLDistiller\Services;
+namespace DaveRandom\WSDLDistiller\Services;
 
 /**
  * Class ServiceCollection
  *
- * @package WSDLDistiller\Services
+ * @package DaveRandom\WSDLDistiller\Services
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */

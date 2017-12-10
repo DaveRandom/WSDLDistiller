@@ -1,11 +1,11 @@
 <?php
 
-namespace WSDLDistiller\Types;
+namespace DaveRandom\WSDLDistiller\Types;
 
 /**
  * Class Type
  *
- * @package WSDLDistiller\Types
+ * @package DaveRandom\WSDLDistiller\Types
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */

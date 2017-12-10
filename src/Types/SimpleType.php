@@ -1,15 +1,15 @@
 <?php
 
-namespace WSDLDistiller\Types;
+namespace DaveRandom\WSDLDistiller\Types;
 
 /**
  * Class SimpleType
  *
- * @package WSDLDistiller\Types
+ * @package DaveRandom\WSDLDistiller\Types
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */
-class SimpleType extends Type
+final class SimpleType extends Type
 {
     const TYPE_RESTRICTION = 0x01;
     const TYPE_LIST = 0x02;

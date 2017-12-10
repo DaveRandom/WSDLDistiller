@@ -1,14 +1,12 @@
 <?php
 
-namespace WSDLDistiller\Types;
+namespace DaveRandom\WSDLDistiller\Types;
 
 /**
  * Class TypeReference
  *
- * @package WSDLDistiller\Types
+ * @package DaveRandom\WSDLDistiller\Types
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */
-class TypeReference extends Type
-{
-}
+final class TypeReference extends Type { }

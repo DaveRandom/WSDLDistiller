@@ -1,15 +1,15 @@
 <?php
 
-namespace WSDLDistiller\Types;
+namespace DaveRandom\WSDLDistiller\Types;
 
 /**
  * Class ComplexType
  *
- * @package WSDLDistiller\Types
+ * @package DaveRandom\WSDLDistiller\Types
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */
-class ComplexType extends Type implements \IteratorAggregate
+final class ComplexType extends Type implements \IteratorAggregate
 {
     /**
      * @var TypeReference[]

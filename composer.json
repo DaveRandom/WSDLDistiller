@@ -1,0 +1,16 @@
+{
+    "name": "daverandom/wsdl-distiller",
+    "description": "Generates PHP code from WSDL documents",
+    "minimum-stability": "dev",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Chris Wright",
+            "email": "daverandom@php.net"
+        }
+    ],
+    "autoload": {
+        "psr-4": { "DaveRandom\\WSDLDistiller\\": "src/" },
+        "files": [ "src/functions.php" ]
+    }
+}

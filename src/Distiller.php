@@ -1,20 +1,20 @@
 <?php
 
-namespace WSDLDistiller;
+namespace DaveRandom\WSDLDistiller;
 
 use InvalidArgumentException, RuntimeException,
-    WSDLDistiller\Services\Operation,
-    WSDLDistiller\Services\Service,
-    WSDLDistiller\Services\ServiceCollection,
-    WSDLDistiller\Types\Type,
-    WSDLDistiller\Types\SimpleType,
-    WSDLDistiller\Types\ComplexType,
-    WSDLDistiller\Types\TypeReference;
+    DaveRandom\WSDLDistiller\Services\Operation,
+    DaveRandom\WSDLDistiller\Services\Service,
+    DaveRandom\WSDLDistiller\Services\ServiceCollection,
+    DaveRandom\WSDLDistiller\Types\Type,
+    DaveRandom\WSDLDistiller\Types\SimpleType,
+    DaveRandom\WSDLDistiller\Types\ComplexType,
+    DaveRandom\WSDLDistiller\Types\TypeReference;
 
 /**
  * Class Distiller
  *
- * @package WSDLDistiller
+ * @package DaveRandom\WSDLDistiller
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */
@@ -49,7 +49,7 @@ class Distiller
     private $classes = [];
 
     /**
-     * @var string[string]
+     * @var string[]
      */
     private $complexTypeNames = [];
 
@@ -59,7 +59,7 @@ class Distiller
     private $serviceCollection;
 
     /**
-     * @var string[string]
+     * @var string[]
      */
     private $primitiveTypeMap = [
         'boolean'            => 'bool',
@@ -90,7 +90,7 @@ class Distiller
     /** @var TypeReference */
     private $typeRefs = [];
 
-    /** @var string[string] */
+    /** @var string[] */
     private $phpTypes = [];
 
     /**
@@ -235,6 +235,8 @@ class Distiller
             $name = $simpleType->getAttribute('name');
             $namespace = $this->getTargetNamespace($simpleType);
 
+            /** @var \DOMNodeList $restriction */
+            /** @var \DOMNodeList $list */
             /** @var \DOMElement $base */
             if (($restriction = $this->xpath->query('./xs:restriction', $simpleType)) && $restriction->length) {
                 $restriction = $restriction->item(0);

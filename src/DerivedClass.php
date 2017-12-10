@@ -1,11 +1,11 @@
 <?php
 
-namespace WSDLDistiller;
+namespace DaveRandom\WSDLDistiller;
 
 /**
  * Class DerivedClass
  *
- * @package WSDLDistiller
+ * @package DaveRandom\WSDLDistiller
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */
