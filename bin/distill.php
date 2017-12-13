@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-namespace DaveRandom\WSDLDistiller;
+namespace DaveRandom\WsdlDistiller;
 
 \define(__NAMESPACE__ . '\\APP_ROOT', \realpath(__DIR__ . '/..'));
 
@@ -145,7 +145,7 @@ HEADER;
 $baseTypeTemplate = \file_get_contents(APP_ROOT . '/templates/WSDLDistillerBaseType.php');
 write($pathFormat, 'WSDLDistillerBaseType', render_template($baseTypeTemplate, ['NAMESPACE' => $namespace]));
 
-$distiller = new Distiller($wsdlPath, $options['prefix'], $options['namespace']);
+$distiller = new Parser($wsdlPath, $options['prefix'], $options['namespace']);
 foreach ($distiller->getClasses() as $class) {
     write($pathFormat, $class->getName(), $fileHeader . $class);
 }

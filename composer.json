@@ -10,7 +10,12 @@
         }
     ],
     "autoload": {
-        "psr-4": { "DaveRandom\\WSDLDistiller\\": "src/" }
+        "psr-4": { "DaveRandom\\WsdlDistiller\\": "src/" },
+        "files": ["src/functions.php"]
+    },
+    "require": {
+        "php": ">=7.1",
+        "daverandom/xsd-distiller": "dev-master"
     },
     "bin": ["bin/distill.php"]
 }

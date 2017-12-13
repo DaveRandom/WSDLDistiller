@@ -1,6 +1,6 @@
 <?php
 
-namespace DaveRandom\WSDLDistiller\Services;
+namespace DaveRandom\WsdlDistiller\Services;
 
 /**
  * Class Service
@@ -9,7 +9,7 @@ namespace DaveRandom\WSDLDistiller\Services;
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */
-class Service
+final class Service
 {
     /**
      * @var string

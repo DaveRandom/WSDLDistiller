@@ -1,6 +1,6 @@
 <?php
 
-namespace DaveRandom\WSDLDistiller;
+namespace DaveRandom\WsdlDistiller;
 
 /**
  * Class DerivedClass
@@ -9,7 +9,7 @@ namespace DaveRandom\WSDLDistiller;
  * @author  Chris Wright <github@daverandom.com>
  * @license http://opensource.org/licenses/MIT MIT
  */
-class DerivedClass
+final class DerivedClass
 {
     /**
      * @var string
